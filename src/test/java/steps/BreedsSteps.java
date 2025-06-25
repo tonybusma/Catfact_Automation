@@ -1,47 +1,62 @@
 package steps;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import io.cucumber.java.en.*;
 import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
+import java.util.Arrays;
+
 public class BreedsSteps {
 	
-	private RequestSpecification request;
+	private String baseUrl; 
     private Response response;
-    private String baseUrl;
 	
-	@Given("I set the base API URL")
-    public void setBaseApiUrl() {
-        baseUrl = "https://jsonplaceholder.typicode.com";
-        request = given().baseUri(baseUrl);
+	@Given("that the user queries the GET endpoint")
+    public void setBaseUrl() {
+		baseUrl = "https://catfact.ninja/breeds";       
     }
 
-    @Given("I set the request body:")
-    public void setRequestBody(String requestBody) {
-        request.body(requestBody);
+    @When("enters the value {int} in the limit field and executes the request")
+    public void setIntegerParamAndGetResponse(int value) {
+    	response = given().queryParam("limit", value).when().get(baseUrl);
+    }
+    
+    @When("enters the value {string} in the limit field and executes the request")
+    public void setStringParamAndGetResponse(String value) {
+    	response = given().queryParam("limit", value).when().get(baseUrl);
+    }
+    
+    @When("enters the value {int} in the limit field, {int} in the page field and executes the request")
+    public void setParamsAndGetResponse(int limit, int page) {
+    	response = given()
+    			.queryParam("limit", limit)
+    			.queryParam("page", page)
+    			.when().get(baseUrl);
     }
 
-    @When("I send a GET request to {string}")
-    public void sendGetRequest(String endpoint) {
-        response = request.get(endpoint);
-    }
-
-    @When("I send a POST request to {string}")
-    public void sendPostRequest(String endpoint) {
-        response = request.post(endpoint);
-    }
-
-    @Then("the response status code should be {int}")
+    @Then("the endpoint should return status code {int}")
     public void verifyStatusCode(int statusCode) {
         response.then().statusCode(statusCode);
     }
 
-    @Then("the response should contain {string} with value {string}")
-    public void verifyResponseBody(String key, String value) {
-        response.then().body(key, equalTo(value));
+    @And("should return a list with the number of items equal to {int}")
+    public void checkDataSizeInBody(int value) {
+    	response.then().body("data", hasSize(value));
+    }
+    
+    @And("should return the message {string}")
+    public void checkMessageBody(String message) {
+    	response.then().body("message", is(message));
+    }
+    
+    @And("should return the value {int} in the {string} field")
+    public void checkDataFieldsInBody(int value, String field) {
+    	response.then().body(field, is(value));
+    }
+    
+    @And("should return the empty data list")
+    public void checkDataFieldEmpty() {
+    	response.then().body("data", is(Arrays.asList()));
     }
 }
